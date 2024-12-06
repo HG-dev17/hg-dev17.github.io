@@ -22,7 +22,7 @@ function createtime1() {
         "小站已经苟活",
         dnum,
         "天啦!",
-        "©2021 By m_HG_m",
+        "©2021~2024 By m_HG_m",
     ];
 
     setTimeout(
