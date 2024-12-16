@@ -20,7 +20,7 @@
   background: rgba(25, 25, 25, 0.3) !important;
 }
 #page-header::before {
-  background: transparent !important;
+  background: rgba(25, 25, 25, 0.1) !important;
 }
 
 /* 夜间模式遮罩透明 */
@@ -97,7 +97,6 @@
 }
 
 /* 导航栏修改 */
-
 /* 一级菜单居中 */
 #nav .menus_items {
   position: absolute !important;
@@ -113,6 +112,7 @@
 .menus_items .menus_item:nth-child(2) .menus_item_child {
   left: -125px;
 }
+
 /* 导航栏菜单鼠标移入字体放大 */
 /* #nav #site-name:hover, 
 #nav .menus_item:hover, 
