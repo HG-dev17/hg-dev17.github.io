@@ -258,9 +258,9 @@
             
             <tag> 教育技术学 </tag>
             
-            <tag> Python </tag>
-            
             <tag> Github </tag>
+            
+            <tag> Python </tag>
             
         </tags>
       
@@ -495,9 +495,9 @@
           
           <category> 混音 </category>
           
-          <category> 比赛 </category>
-          
           <category> GXNU </category>
+          
+          <category> 比赛 </category>
           
       </categories>
       
@@ -528,9 +528,9 @@
           
           <category> 编程语言 </category>
           
-          <category> 比赛 </category>
-          
           <category> GXNU </category>
+          
+          <category> 比赛 </category>
           
           <category> ROS </category>
           
@@ -541,9 +541,9 @@
       
         <tags>
             
-            <tag> CRAIC </tag>
-            
             <tag> Python </tag>
+            
+            <tag> CRAIC </tag>
             
             <tag> ROS </tag>
             
@@ -655,11 +655,11 @@
       
         <tags>
             
+            <tag> Python </tag>
+            
             <tag> 工具 </tag>
             
             <tag> 黑科技 </tag>
-            
-            <tag> Python </tag>
             
             <tag> 网易云 </tag>
             
