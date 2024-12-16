@@ -1,3 +1,9 @@
+/* 加载动画头像 */
+.loading-img {
+  background: url(/img/HG.JPG) no-repeat center center;
+  background-size: cover;
+}
+
 /* 页脚与头图透明 */
 #footer {
   background: transparent !important;
