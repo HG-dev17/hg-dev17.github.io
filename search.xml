@@ -491,13 +491,13 @@
       
       <categories>
           
+          <category> 比赛 </category>
+          
           <category> music </category>
           
           <category> GXNU </category>
           
           <category> 混音 </category>
-          
-          <category> 比赛 </category>
           
       </categories>
       
@@ -528,9 +528,9 @@
           
           <category> 编程语言 </category>
           
-          <category> GXNU </category>
-          
           <category> 比赛 </category>
+          
+          <category> GXNU </category>
           
           <category> ROS </category>
           
