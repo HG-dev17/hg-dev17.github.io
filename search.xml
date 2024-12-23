@@ -258,9 +258,9 @@
             
             <tag> 教育技术学 </tag>
             
-            <tag> Github </tag>
-            
             <tag> Python </tag>
+            
+            <tag> Github </tag>
             
         </tags>
       
@@ -340,9 +340,9 @@
           
           <category> 英语 </category>
           
-          <category> GXNU </category>
-          
           <category> 加密 </category>
+          
+          <category> GXNU </category>
           
       </categories>
       
@@ -458,9 +458,9 @@
           
           <category> 工具 </category>
           
-          <category> 音频 </category>
-          
           <category> AI </category>
+          
+          <category> 音频 </category>
           
       </categories>
       
@@ -541,9 +541,9 @@
       
         <tags>
             
-            <tag> Python </tag>
-            
             <tag> CRAIC </tag>
+            
+            <tag> Python </tag>
             
             <tag> ROS </tag>
             
