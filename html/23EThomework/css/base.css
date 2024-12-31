@@ -1,0 +1,47 @@
+body{
+    margin: 0;
+    padding: 0;
+    height: 100vh; /* 设置body高度为视口高度 */
+    display: flex;
+    flex-direction: column;
+}
+main {
+    flex-grow: 1; /* 主要内容区域占据剩余空间 */
+    padding: 20px;
+}
+footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+
+    position: fixed; /* 固定定位 */
+    bottom: 0; /* 距离底部为0 */
+    width: 100%; /* 宽度100% */
+}
+table {
+
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+}
+
+@media only screen and (max-width: 600px) {
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    th, td {
+        border: none;
+        padding: 8px;
+        text-align: left;
+    }
+
+    tr {
+        border-bottom: 1px solid #ccc;
+    }
+}
