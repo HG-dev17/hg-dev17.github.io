@@ -4,6 +4,37 @@
   
     
     <entry>
+      <title>我的记账</title>
+      <link href="/2025/01/27/money/"/>
+      <url>/2025/01/27/money/</url>
+      
+        <content type="html"><![CDATA[<div class="hbe hbe-container" id="hexo-blog-encrypt" data-wpm="抱歉, 这个密码看着不太对, 请再试试." data-whm="抱歉, 这个文章不能被校验, 不过您还是能看看解密后的内容.">  <script id="hbeData" type="hbeData" data-hmacdigest="5a0694d9ad5324a7843ee789c13f3712fda8327708df940c2fc677b4b61ad131">7105125d490fa0f033f6c41d7eafb1d1938100d0a5d4122aa71c5ec357ee8417e191413e2ff37b5379556360ad2307ad474a651cdeec7a5581f0e4200005b13a73db985333e414109c5e1acad98b49fb06c4f843596be7f3b495796da1e165f6f568c8a236c357a40a9d6fef487d0f16ec3772dc031ef8378776c4fe606bbe54a3a946ecdcde0e1865980a0e675520e3491ba4d8b9632662ba0c1975fd899c57d3cd2da69e2ef2c3192556cfdeb1feca34ee81efb668f4988e2aaa6d644b133006ec333077f392b79083dedaf1ac6283b87f7e7c6ca1cb857d8fc372c5503bd852edcc788586e4a8f2ae8c7c724addb15c313ad344ad4d4cacc1aa9740cdc46918258e3f3eb8c84de001b4f111f9af9340c0d945d77fd032903efb5b4afd15f067f754284cd58d5b9a1381ea6982e74ae9924ee661f3f0fd77103e479a47ba60592d6a01382775f87a6099c72ea4f791837bb36bb9ff6de7b9579ebd4c6dc890</script>  <div class="hbe hbe-content">    <div class="hbe hbe-input hbe-input-blink">      <input class="hbe hbe-input-field hbe-input-field-blink" type="password" id="hbePass">      <label class="hbe hbe-input-label hbe-input-label-blink" for="hbePass">        <span class="hbe hbe-input-label-content hbe-input-label-content-blink" data-content="您好, 这里需要密码.">您好, 这里需要密码.</span>      </label>    </div>  </div></div><script data-pjax src="/lib/hbe.js"></script><link href="/css/hbe.style.css" rel="stylesheet" type="text/css">]]></content>
+      
+      
+      <categories>
+          
+          <category> 生活 </category>
+          
+          <category> 记账 </category>
+          
+          <category> 加密 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 加密 </tag>
+            
+            <tag> 账本 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>hexo魔改教程（一）</title>
       <link href="/2025/01/16/hexo-magic/"/>
       <url>/2025/01/16/hexo-magic/</url>
@@ -547,11 +578,11 @@
           
           <category> music </category>
           
+          <category> 比赛 </category>
+          
           <category> 混音 </category>
           
           <category> GXNU </category>
-          
-          <category> 比赛 </category>
           
       </categories>
       
@@ -582,9 +613,9 @@
           
           <category> 编程语言 </category>
           
-          <category> GXNU </category>
-          
           <category> 比赛 </category>
+          
+          <category> GXNU </category>
           
           <category> ROS </category>
           
@@ -709,11 +740,11 @@
       
         <tags>
             
-            <tag> Python </tag>
-            
             <tag> 工具 </tag>
             
             <tag> 黑科技 </tag>
+            
+            <tag> Python </tag>
             
             <tag> 网易云 </tag>
             
