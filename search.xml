@@ -392,11 +392,11 @@
       
       <categories>
           
-          <category> 加密 </category>
+          <category> GXNU </category>
           
           <category> 英语 </category>
           
-          <category> GXNU </category>
+          <category> 加密 </category>
           
       </categories>
       
@@ -425,9 +425,9 @@
       
       <categories>
           
-          <category> 英语 </category>
-          
           <category> GXNU </category>
+          
+          <category> 英语 </category>
           
       </categories>
       
@@ -512,9 +512,9 @@
           
           <category> 工具 </category>
           
-          <category> AI </category>
-          
           <category> 音频 </category>
+          
+          <category> AI </category>
           
       </categories>
       
@@ -709,11 +709,11 @@
       
         <tags>
             
+            <tag> Python </tag>
+            
             <tag> 工具 </tag>
             
             <tag> 黑科技 </tag>
-            
-            <tag> Python </tag>
             
             <tag> 网易云 </tag>
             
