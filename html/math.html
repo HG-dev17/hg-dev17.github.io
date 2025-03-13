@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>算数游戏 - 5个关卡</title>
+    <title>科幻算数游戏 - 多种模式</title>
     <style>
         /* 全局样式 */
         body {
@@ -73,6 +73,7 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s, box-shadow 0.3s;
+            margin: 5px;
         }
 
         button:hover {
@@ -89,12 +90,32 @@
         }
 
         /* 得分和关卡样式 */
-        #score, #level {
+        #score, #level, #timer {
             margin-top: 15px;
             font-size: 1.5rem;
             font-weight: bold;
             color: #00ffcc;
             text-shadow: 0 0 10px #00ffcc;
+        }
+
+        /* 选项容器样式 */
+        #options {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        /* 动画效果 */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .shake {
+            animation: shake 0.5s;
         }
     </style>
     <!-- 引入科幻风格字体 -->
@@ -102,13 +123,22 @@
 </head>
 <body>
     <div class="container">
-        <h1>算数游戏</h1>
+        <h1>科幻算数游戏</h1>
         <p id="question"></p>
-        <input type="text" id="answer" placeholder="输入答案">
-        <button id="submit">提交</button>
+        <div id="input-mode">
+            <input type="text" id="answer" placeholder="输入答案">
+            <button id="submit">提交</button>
+        </div>
+        <div id="options" style="display: none;">
+            <button class="option"></button>
+            <button class="option"></button>
+            <button class="option"></button>
+            <button class="option"></button>
+        </div>
         <p id="result"></p>
         <p id="score">得分: 0</p>
         <p id="level">关卡: 1</p>
+        <p id="timer">时间: 30秒</p>
     </div>
 
     <script>
@@ -119,10 +149,17 @@
             const resultElement = document.getElementById("result");
             const scoreElement = document.getElementById("score");
             const levelElement = document.getElementById("level");
+            const timerElement = document.getElementById("timer");
+            const inputMode = document.getElementById("input-mode");
+            const optionsMode = document.getElementById("options");
+            const optionButtons = document.querySelectorAll(".option");
 
             let score = 0;
             let level = 1;
+            let timeLeft = 30;
+            let timer;
             let num1, num2, correctAnswer;
+            let currentMode = "input"; // 当前模式：input（输入）或 options（选择）
 
             // 关卡配置
             const levels = [
@@ -133,6 +170,25 @@
                 { range: 200, operators: ['+', '-', '*', '/'] } // 关卡5：最终挑战
             ];
 
+            // 初始化游戏
+            function startGame() {
+                score = 0;
+                level = 1;
+                timeLeft = 30;
+                clearInterval(timer);
+                updateUI();
+                generateQuestion();
+                startTimer();
+            }
+
+            // 更新界面
+            function updateUI() {
+                scoreElement.textContent = `得分: ${score}`;
+                levelElement.textContent = `关卡: ${level}`;
+                timerElement.textContent = `时间: ${timeLeft}秒`;
+            }
+
+            // 生成题目
             function generateQuestion() {
                 const currentLevel = levels[level - 1];
                 num1 = Math.floor(Math.random() * currentLevel.range);
@@ -147,10 +203,36 @@
 
                 correctAnswer = eval(`${num1} ${operator} ${num2}`);
                 questionElement.textContent = `${num1} ${operator} ${num2} = ?`;
+
+                // 随机切换模式
+                currentMode = Math.random() > 0.5 ? "input" : "options";
+                if (currentMode === "input") {
+                    inputMode.style.display = "block";
+                    optionsMode.style.display = "none";
+                } else {
+                    inputMode.style.display = "none";
+                    optionsMode.style.display = "flex";
+                    generateOptions();
+                }
             }
 
-            function checkAnswer() {
-                const userAnswer = parseFloat(answerElement.value);
+            // 生成选项
+            function generateOptions() {
+                const options = [correctAnswer];
+                while (options.length < 4) {
+                    const randomOption = correctAnswer + Math.floor(Math.random() * 10 - 5); // 生成接近正确答案的选项
+                    if (!options.includes(randomOption)) {
+                        options.push(randomOption);
+                    }
+                }
+                options.sort(() => Math.random() - 0.5); // 随机排序选项
+                optionButtons.forEach((button, index) => {
+                    button.textContent = options[index];
+                });
+            }
+
+            // 检查答案
+            function checkAnswer(userAnswer) {
                 if (userAnswer === correctAnswer) {
                     resultElement.textContent = "正确！";
                     resultElement.style.color = "#00ff99";
@@ -160,6 +242,7 @@
                         if (level > levels.length) {
                             resultElement.textContent = "恭喜！你完成了所有关卡！";
                             submitButton.disabled = true;
+                            clearInterval(timer);
                             return;
                         }
                         levelElement.textContent = `关卡: ${level}`;
@@ -167,20 +250,47 @@
                 } else {
                     resultElement.textContent = `错误！正确答案是 ${correctAnswer}`;
                     resultElement.style.color = "#ff0066";
+                    questionElement.classList.add("shake"); // 添加抖动动画
+                    setTimeout(() => questionElement.classList.remove("shake"), 500);
                 }
-                scoreElement.textContent = `得分: ${score}`;
+                updateUI();
                 answerElement.value = "";
                 generateQuestion();
             }
 
-            submitButton.addEventListener("click", checkAnswer);
+            // 倒计时
+            function startTimer() {
+                timer = setInterval(() => {
+                    timeLeft--;
+                    timerElement.textContent = `时间: ${timeLeft}秒`;
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        resultElement.textContent = "时间到！游戏结束！";
+                        submitButton.disabled = true;
+                    }
+                }, 1000);
+            }
+
+            // 事件监听
+            submitButton.addEventListener("click", () => {
+                const userAnswer = parseFloat(answerElement.value);
+                checkAnswer(userAnswer);
+            });
+            optionButtons.forEach(button => {
+                button.addEventListener("click", () => {
+                    const userAnswer = parseFloat(button.textContent);
+                    checkAnswer(userAnswer);
+                });
+            });
             answerElement.addEventListener("keypress", function(event) {
                 if (event.key === "Enter") {
-                    checkAnswer();
+                    const userAnswer = parseFloat(answerElement.value);
+                    checkAnswer(userAnswer);
                 }
             });
 
-            generateQuestion();
+            // 启动游戏
+            startGame();
         });
     </script>
 </body>
