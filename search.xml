@@ -547,11 +547,11 @@
           
           <category> music </category>
           
+          <category> 混音 </category>
+          
           <category> GXNU </category>
           
           <category> 比赛 </category>
-          
-          <category> 混音 </category>
           
       </categories>
       
@@ -700,20 +700,20 @@
       
       <categories>
           
-          <category> 编程语言 </category>
-          
           <category> 工具 </category>
+          
+          <category> 编程语言 </category>
           
       </categories>
       
       
         <tags>
             
-            <tag> Python </tag>
-            
             <tag> 工具 </tag>
             
             <tag> 黑科技 </tag>
+            
+            <tag> Python </tag>
             
             <tag> 网易云 </tag>
             
