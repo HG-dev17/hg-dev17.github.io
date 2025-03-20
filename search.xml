@@ -239,9 +239,9 @@
       
       <categories>
           
-          <category> 工具 </category>
-          
           <category> 易语言 </category>
+          
+          <category> 工具 </category>
           
       </categories>
       
@@ -270,9 +270,9 @@
       
       <categories>
           
-          <category> 工具 </category>
-          
           <category> 易语言 </category>
+          
+          <category> 工具 </category>
           
       </categories>
       
@@ -312,9 +312,9 @@
             
             <tag> 教育技术学 </tag>
             
-            <tag> Python </tag>
-            
             <tag> Github </tag>
+            
+            <tag> Python </tag>
             
         </tags>
       
@@ -549,9 +549,9 @@
           
           <category> GXNU </category>
           
-          <category> 混音 </category>
-          
           <category> 比赛 </category>
+          
+          <category> 混音 </category>
           
       </categories>
       
@@ -595,9 +595,9 @@
       
         <tags>
             
-            <tag> CRAIC </tag>
-            
             <tag> Python </tag>
+            
+            <tag> CRAIC </tag>
             
             <tag> ROS </tag>
             
