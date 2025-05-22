@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>算数游戏 - 算数训练</title>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #0a0a0a;
+            color: #00ffcc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* 容器样式 */
+        .container {
+            background-color: #111;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #00ffcc;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        /* 标题样式 */
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+        }
+
+        /* 问题样式 */
+        #question {
+            font-size: 2rem;
+            margin: 20px 0;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+        }
+
+        /* 输入框样式 */
+        input {
+            padding: 10px;
+            font-size: 1.2rem;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #222;
+            border: 2px solid #00ffcc;
+            color: #00ffcc;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #00ff99;
+            box-shadow: 0 0 10px #00ff99;
+        }
+
+        /* 按钮样式 */
+        button {
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            background-color: #00ffcc;
+            color: #111;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #00ff99;
+            box-shadow: 0 0 15px #00ff99;
+        }
+
+        /* 结果样式 */
+        #result {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+        }
+
+        /* 得分和关卡样式 */
+        #score, #level, #timer {
+            margin-top: 15px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+        }
+
+        /* 选项容器样式 */
+        #options {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        /* 动画效果 */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+    </style>
+    <!-- 引入科幻风格字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>算数游戏-神算手</h1>
+        <p id="question"></p>
+        <div id="input-mode">
+            <input type="text" id="answer" placeholder="输入答案">
+            <button id="submit">提交</button>
+        </div>
+        <div id="options" style="display: none;">
+            <button class="option"></button>
+            <button class="option"></button>
+            <button class="option"></button>
+            <button class="option"></button>
+        </div>
+        <p id="result"></p>
+        <p id="score">得分: 0</p>
+        <p id="level">关卡: 1</p>
+        <p id="timer">时间: 30秒</p>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const questionElement = document.getElementById("question");
+            const answerElement = document.getElementById("answer");
+            const submitButton = document.getElementById("submit");
+            const resultElement = document.getElementById("result");
+            const scoreElement = document.getElementById("score");
+            const levelElement = document.getElementById("level");
+            const timerElement = document.getElementById("timer");
+            const inputMode = document.getElementById("input-mode");
+            const optionsMode = document.getElementById("options");
+            const optionButtons = document.querySelectorAll(".option");
+
+            let score = 0;
+            let level = 1;
+            let timeLeft = 30;
+            let timer;
+            let num1, num2, correctAnswer;
+            let currentMode = "input"; // 当前模式：input（输入）或 options（选择）
+
+            // 关卡配置
+            const levels = [
+                { range: 10, operators: ['+', '-'] }, // 关卡1：简单加减法
+                { range: 20, operators: ['+', '-', '*'] }, // 关卡2：加入乘法
+                { range: 50, operators: ['+', '-', '*'] }, // 关卡3：数字范围增大
+                { range: 100, operators: ['+', '-', '*', '/'] }, // 关卡4：加入除法
+                { range: 200, operators: ['+', '-', '*', '/'] } // 关卡5：最终挑战
+            ];
+
+            // 初始化游戏
+            function startGame() {
+                score = 0;
+                level = 1;
+                timeLeft = 30;
+                clearInterval(timer);
+                updateUI();
+                generateQuestion();
+                startTimer();
+            }
+
+            // 更新界面
+            function updateUI() {
+                scoreElement.textContent = `得分: ${score}`;
+                levelElement.textContent = `关卡: ${level}`;
+                timerElement.textContent = `时间: ${timeLeft}秒`;
+            }
+
+            // 生成题目
+            function generateQuestion() {
+                const currentLevel = levels[level - 1];
+                num1 = Math.floor(Math.random() * currentLevel.range);
+                num2 = Math.floor(Math.random() * currentLevel.range);
+                const operator = currentLevel.operators[Math.floor(Math.random() * currentLevel.operators.length)];
+
+                if (operator === '/') {
+                    // 确保除法结果是整数
+                    num2 = num2 === 0 ? 1 : num2; // 避免除以零
+                    num1 = num1 * num2; // 确保num1是num2的倍数
+                }
+
+                correctAnswer = eval(`${num1} ${operator} ${num2}`);
+                questionElement.textContent = `${num1} ${operator} ${num2} = ?`;
+
+                // 随机切换模式
+                currentMode = Math.random() > 0.5 ? "input" : "options";
+                if (currentMode === "input") {
+                    inputMode.style.display = "block";
+                    optionsMode.style.display = "none";
+                } else {
+                    inputMode.style.display = "none";
+                    optionsMode.style.display = "flex";
+                    generateOptions();
+                }
+            }
+
+            // 生成选项
+            function generateOptions() {
+                const options = [correctAnswer];
+                while (options.length < 4) {
+                    const randomOption = correctAnswer + Math.floor(Math.random() * 10 - 5); // 生成接近正确答案的选项
+                    if (!options.includes(randomOption)) {
+                        options.push(randomOption);
+                    }
+                }
+                options.sort(() => Math.random() - 0.5); // 随机排序选项
+                optionButtons.forEach((button, index) => {
+                    button.textContent = options[index];
+                });
+            }
+
+            // 检查答案
+            function checkAnswer(userAnswer) {
+                if (userAnswer === correctAnswer) {
+                    resultElement.textContent = "正确！";
+                    resultElement.style.color = "#00ff99";
+                    score += level * 10; // 根据关卡增加得分
+                    if (score >= level * 50) { // 每得50分进入下一关
+                        level++;
+                        if (level > levels.length) {
+                            resultElement.textContent = "恭喜！你完成了所有关卡！";
+                            submitButton.disabled = true;
+                            clearInterval(timer);
+                            return;
+                        }
+                        levelElement.textContent = `关卡: ${level}`;
+                    }
+                } else {
+                    resultElement.textContent = `错误！正确答案是 ${correctAnswer}`;
+                    resultElement.style.color = "#ff0066";
+                    questionElement.classList.add("shake"); // 添加抖动动画
+                    setTimeout(() => questionElement.classList.remove("shake"), 500);
+                }
+                updateUI();
+                answerElement.value = "";
+                generateQuestion();
+            }
+
+            // 倒计时
+            function startTimer() {
+                timer = setInterval(() => {
+                    timeLeft--;
+                    timerElement.textContent = `时间: ${timeLeft}秒`;
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        resultElement.textContent = "时间到！游戏结束！";
+                        submitButton.disabled = true;
+                    }
+                }, 1000);
+            }
+
+            // 事件监听
+            submitButton.addEventListener("click", () => {
+                const userAnswer = parseFloat(answerElement.value);
+                checkAnswer(userAnswer);
+            });
+            optionButtons.forEach(button => {
+                button.addEventListener("click", () => {
+                    const userAnswer = parseFloat(button.textContent);
+                    checkAnswer(userAnswer);
+                });
+            });
+            answerElement.addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+                    const userAnswer = parseFloat(answerElement.value);
+                    checkAnswer(userAnswer);
+                }
+            });
+
+            // 启动游戏
+            startGame();
+        });
+    </script>
+</body>
+</html>
