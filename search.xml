@@ -15,9 +15,9 @@
           
           <category> 编程语言 </category>
           
-          <category> GXNU </category>
-          
           <category> 比赛 </category>
+          
+          <category> GXNU </category>
           
       </categories>
       
@@ -341,9 +341,9 @@
             
             <tag> 教育技术学 </tag>
             
-            <tag> Github </tag>
-            
             <tag> Python </tag>
+            
+            <tag> Github </tag>
             
         </tags>
       
@@ -576,9 +576,9 @@
           
           <category> 编程语言 </category>
           
-          <category> GXNU </category>
-          
           <category> 比赛 </category>
+          
+          <category> GXNU </category>
           
           <category> ROS </category>
           
@@ -589,9 +589,9 @@
       
         <tags>
             
-            <tag> Python </tag>
-            
             <tag> CRAIC </tag>
+            
+            <tag> Python </tag>
             
             <tag> ROS </tag>
             
