@@ -20,7 +20,10 @@
   var LS_VOLUME = "cookiesky.player.volume";
   var LS_SHUFFLE = "cookiesky.player.shuffle";
   var LS_REPEAT = "cookiesky.player.repeat";
+  var LS_DOWNLOAD_URLS = "cookiesky.player.downloadUrls.v1";
+  var DOWNLOAD_URL_TTL = 12 * 60 * 60 * 1000;
   var FETCH_TIMEOUT = 9000;
+  var SONG_TIMEOUT = 25000;
 
   var state = {
     playlist: [],
@@ -34,11 +37,15 @@
     search: "",
     trackLoaded: false,
     retried: false,
-    skipCount: 0
+    skipCount: 0,
+    downloading: false,
+    downloadCancel: false
   };
 
   var audio = new Audio();
   audio.preload = "metadata";
+  var downloadController = null;
+  var downloadUrlCache = {};
 
   var els = {};
   var toastTimer = null;
@@ -58,12 +65,11 @@
     return document.getElementById(id);
   }
 
-  function fetchJson(url) {
+  function fetchJson(url, timeout) {
     var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
     var timer = setTimeout(function () {
       if (controller) controller.abort();
-    }, FETCH_TIMEOUT);
-
+    }, timeout || FETCH_TIMEOUT);
     return fetch(url, { cache: "no-store", signal: controller ? controller.signal : undefined })
       .then(function (res) {
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -72,6 +78,14 @@
       .finally(function () {
         clearTimeout(timer);
       });
+  }
+
+  function fetchJsonRetry(url, timeout) {
+    return fetchJson(url, timeout).catch(function () {
+      return sleep(350).then(function () {
+        return fetchJson(url, timeout);
+      });
+    });
   }
 
   function sourceKey(source) {
@@ -103,6 +117,26 @@
     }
   }
 
+  function restoreDownloadUrls() {
+    try {
+      var data = JSON.parse(localStorage.getItem(LS_DOWNLOAD_URLS) || "null");
+      if (!data || !data.urls || Date.now() - (data.at || 0) > DOWNLOAD_URL_TTL) return;
+      Object.keys(data.urls).forEach(function (id) {
+        var url = data.urls[id];
+        if (isHttpUrl(url)) downloadUrlCache[id] = url;
+      });
+    } catch (err) {}
+  }
+
+  function saveDownloadUrls() {
+    try {
+      localStorage.setItem(LS_DOWNLOAD_URLS, JSON.stringify({
+        at: Date.now(),
+        urls: downloadUrlCache
+      }));
+    } catch (err) {}
+  }
+
   function cacheEls() {
     [
       "bg", "cover", "title", "artist", "currentTime", "duration", "progress",
@@ -111,7 +145,8 @@
       "trackCount", "sourceLabel", "queueBadge", "trackList", "queueEmpty",
       "search", "importBtn", "localFileBtn", "importModal", "closeModal",
       "importInput", "importConfirm", "useDefault", "fileInput", "toast",
-      "addModeModal", "addCount", "addAppend", "addReplace", "closeAddMode"
+      "addModeModal", "addCount", "addAppend", "addReplace", "closeAddMode",
+      "downloadAllBtn", "downloadAllText", "downloadCurrentBtn"
     ].forEach(function (id) {
       els[id] = $(id);
     });
@@ -150,7 +185,7 @@
         return item && (item.url || item.id || item.songid);
       })
       .map(function (item) {
-        var url = String(item.url);
+        var url = item.url ? String(item.url) : "";
         if (url.indexOf("http://") === 0) url = "https://" + url.slice(7);
         var idMatch = url.match(/[?&]id=(\d+)/);
         return {
@@ -297,6 +332,7 @@
           state.index = Math.min(state.index, tracks.length - 1);
           renderPlaylist();
           setSourceUI();
+          primeDownloadUrls();
           return true;
         }
 
@@ -309,6 +345,7 @@
         renderPlaylist();
         selectTrack(0, false);
         setSourceUI();
+        primeDownloadUrls();
         if (remember) saveSource(source);
         toast("已加载 " + tracks.length + " 首歌曲");
         return true;
@@ -406,6 +443,330 @@
       return "https://music.163.com/song/media/outer/url?id=" + encodeURIComponent(track.id) + ".mp3";
     }
     return track.url;
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
+
+  function isHttpUrl(value) {
+    return /^https?:\/\//i.test(String(value || ""));
+  }
+
+  function sanitizeFilename(value) {
+    var name = String(value || "")
+      .replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/[. ]+$/, "");
+    if (name.length > 140) {
+      var ext = "";
+      var dot = name.lastIndexOf(".");
+      if (dot > 0 && name.length - dot <= 6) {
+        ext = name.slice(dot);
+        name = name.slice(0, dot);
+      }
+      name = name.slice(0, 140 - ext.length) + ext;
+    }
+    return name || "audio.mp3";
+  }
+
+  function downloadFilename(track, prefix) {
+    if (track.fileName) return sanitizeFilename(track.fileName);
+
+    var base = String(track.name || "音频");
+    if (track.artist && track.artist !== "未知歌手" && track.artist !== "本地文件") {
+      base = track.artist + " - " + base;
+    }
+
+    var ext = ".mp3";
+    var matched = String(track.url || "").split("?")[0].match(/\.(mp3|flac|m4a|aac|ogg|wav|ape)$/i);
+    if (matched) ext = "." + matched[1].toLowerCase();
+
+    return sanitizeFilename((prefix || "") + base + ext);
+  }
+
+  function resolveDownloadUrl(track) {
+    if (!track) return Promise.reject(new Error("没有歌曲"));
+    if (track.local && track.url) return Promise.resolve(track.url);
+    if (track.id && downloadUrlCache[track.id]) return Promise.resolve(downloadUrlCache[track.id]);
+    if (isHttpUrl(track.url)) {
+      if (track.id) {
+        downloadUrlCache[track.id] = track.url;
+        saveDownloadUrls();
+      }
+      return Promise.resolve(track.url);
+    }
+    if (!track.id) return Promise.reject(new Error("没有可下载的地址"));
+
+    // 只有歌曲 ID 时，向 Meting 单曲接口换取带 auth 的直链（该接口允许跨域）
+    var apis = [activeApi].concat(APIS.filter(function (api) {
+      return api !== activeApi;
+    }));
+
+    function tryApi(index, lastError) {
+      if (index >= apis.length) {
+        return Promise.reject(lastError || new Error("没有可下载的地址"));
+      }
+      return fetchJsonRetry(apis[index] + "?server=netease&type=song&id=" +
+        encodeURIComponent(track.id) + "&r=" + Date.now(), SONG_TIMEOUT)
+        .then(function (data) {
+          var item = Array.isArray(data) ? data[0] : data;
+          var url = item && item.url;
+          if (!isHttpUrl(url)) throw new Error("没有可下载的地址");
+          downloadUrlCache[track.id] = url;
+          saveDownloadUrls();
+          return url;
+        })
+        .catch(function (err) {
+          return tryApi(index + 1, err);
+        });
+    }
+
+    return tryApi(0, null);
+  }
+
+  function primeDownloadUrls() {
+    state.playlist.forEach(function (track) {
+      if (track && track.id && isHttpUrl(track.url)) {
+        downloadUrlCache[track.id] = track.url;
+      }
+    });
+
+    var missing = state.playlist.some(function (track) {
+      return track && !track.local && track.id && !downloadUrlCache[track.id];
+    });
+    if (!missing) return Promise.resolve();
+
+    var source = state.source || {};
+    var url = "";
+    if (source.kind === "netease") {
+      url = activeApi + "?server=netease&type=playlist&id=" +
+        encodeURIComponent(source.id) + "&r=" + Date.now();
+    } else if (source.kind === "snapshot") {
+      url = activeApi + "?server=netease&type=playlist&id=" +
+        encodeURIComponent(DEFAULT_NETEASE_ID) + "&r=" + Date.now();
+    } else if (source.kind === "meting" && source.url) {
+      url = source.url;
+    }
+    if (!url) return Promise.resolve();
+
+    return fetchJsonRetry(url, SONG_TIMEOUT).then(function (data) {
+      normalizeTracks(data).forEach(function (track) {
+        if (track.id && isHttpUrl(track.url)) {
+          downloadUrlCache[track.id] = track.url;
+        }
+      });
+      saveDownloadUrls();
+    }).catch(function () {});
+  }
+
+  function fetchAudioBlob(url) {
+    var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    downloadController = controller;
+    var timer = setTimeout(function () {
+      if (controller) controller.abort();
+    }, 180000);
+
+    return fetch(url, {
+      mode: "cors",
+      credentials: "omit",
+      cache: "no-store",
+      signal: controller ? controller.signal : undefined
+    }).then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.blob();
+    }).finally(function () {
+      clearTimeout(timer);
+      downloadController = null;
+    });
+  }
+
+  function fetchTrackBlob(track) {
+    return resolveDownloadUrl(track).then(fetchAudioBlob).catch(function (err) {
+      // 直链可能已失效：清掉缓存后重新解析一次
+      if (!track || !track.id || !downloadUrlCache[track.id]) throw err;
+      delete downloadUrlCache[track.id];
+      saveDownloadUrls();
+      return resolveDownloadUrl(track).then(fetchAudioBlob);
+    });
+  }
+
+  function saveBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 60000);
+  }
+
+  function openInNewTab(url) {
+    if (!url) return;
+    var link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  function writeBlobToDir(dir, filename, blob) {
+    return dir.getFileHandle(filename, { create: true })
+      .then(function (handle) {
+        return handle.createWritable();
+      })
+      .then(function (writable) {
+        return writable.write(blob).then(function () {
+          return writable.close();
+        });
+      });
+  }
+
+  function setBatchDownloadState(active, text) {
+    if (!els.downloadAllBtn) return;
+    els.downloadAllBtn.classList.toggle("is-busy", active);
+    els.downloadAllText.textContent = text;
+    els.downloadAllBtn.title = active ? "点击取消下载" : "下载当前列表（受搜索筛选影响）";
+  }
+
+  function visibleIndices() {
+    var keyword = state.search.trim().toLowerCase();
+    var indices = [];
+    state.playlist.forEach(function (track, index) {
+      if (!keyword) {
+        indices.push(index);
+        return;
+      }
+      var text = (track.name + " " + track.artist).toLowerCase();
+      if (text.indexOf(keyword) !== -1) indices.push(index);
+    });
+    return indices;
+  }
+
+  function downloadTrack(track, button) {
+    if (!track) {
+      toast("还没有可以下载的歌曲");
+      return;
+    }
+    if (button) {
+      button.disabled = true;
+      button.classList.add("is-busy");
+    }
+
+    fetchTrackBlob(track)
+      .then(function (blob) {
+        saveBlob(blob, downloadFilename(track));
+        toast("正在下载「" + track.name + "」");
+      })
+      .catch(function (err) {
+        console.warn("[player] 下载失败", err);
+        openInNewTab(trackSrc(track) || track.url);
+        toast("无法直接下载，已在新标签页打开");
+      })
+      .finally(function () {
+        if (button) {
+          button.disabled = false;
+          button.classList.remove("is-busy");
+        }
+      });
+  }
+
+  function downloadBatch() {
+    if (state.downloading) {
+      state.downloadCancel = true;
+      if (downloadController) downloadController.abort();
+      setBatchDownloadState(true, "正在取消…");
+      return;
+    }
+
+    var indices = visibleIndices();
+    if (!indices.length) {
+      toast("当前列表没有歌曲");
+      return;
+    }
+
+    function begin(dir) {
+      state.downloading = true;
+      state.downloadCancel = false;
+      var ok = 0;
+      var fail = 0;
+      var total = indices.length;
+
+      function finish() {
+        var cancelled = state.downloadCancel;
+        state.downloading = false;
+        state.downloadCancel = false;
+        setBatchDownloadState(false, "批量下载");
+        if (cancelled) toast("已取消下载，已完成 " + ok + " 首");
+        else if (fail) toast("下载完成：成功 " + ok + " 首，失败 " + fail + " 首");
+        else toast("已下载 " + ok + " 首歌曲");
+      }
+
+      function step(pos) {
+        if (pos >= total || state.downloadCancel) {
+          finish();
+          return;
+        }
+
+        var track = state.playlist[indices[pos]];
+        setBatchDownloadState(true, "取消下载 (" + (pos + 1) + "/" + total + ")");
+
+        fetchTrackBlob(track)
+          .then(function (blob) {
+            var prefix = String(pos + 1).padStart(2, "0") + " - ";
+            var filename = downloadFilename(track, prefix);
+            if (dir) {
+              return writeBlobToDir(dir, filename, blob).catch(function () {
+                saveBlob(blob, filename);
+              });
+            }
+            saveBlob(blob, filename);
+            return sleep(220);
+          })
+          .then(function () {
+            ok += 1;
+          })
+          .catch(function (err) {
+            if (state.downloadCancel || (err && err.name === "AbortError")) return;
+            fail += 1;
+            console.warn("[player] 批量下载失败", track && track.name, err);
+          })
+          .then(function () {
+            step(pos + 1);
+          });
+      }
+
+      setBatchDownloadState(true, "准备下载…");
+      primeDownloadUrls().then(function () {
+        step(0);
+      });
+    }
+
+    if (window.showDirectoryPicker && window.isSecureContext) {
+      window.showDirectoryPicker({ mode: "readwrite" })
+        .then(begin)
+        .catch(function (err) {
+          if (err && err.name === "AbortError") return;
+          toast("无法选择文件夹，改为逐个下载");
+          begin(null);
+        });
+      return;
+    }
+
+    toast("将下载 " + indices.length + " 首，浏览器可能询问是否允许下载多个文件");
+    setTimeout(function () {
+      begin(null);
+    }, 350);
   }
 
   function startPlayback(forceReload) {
@@ -564,9 +925,21 @@
       bars.className = "track-bars";
       bars.innerHTML = "<i></i><i></i><i></i>";
 
+      var download = document.createElement("button");
+      download.type = "button";
+      download.className = "track-dl";
+      download.title = "下载这首";
+      download.setAttribute("aria-label", "下载 " + track.name);
+      download.innerHTML = '<svg class="icon"><use href="#i-download"/></svg>';
+      download.addEventListener("click", function (event) {
+        event.stopPropagation();
+        downloadTrack(track, download);
+      });
+
       li.appendChild(idx);
       li.appendChild(text);
       li.appendChild(bars);
+      li.appendChild(download);
       li.addEventListener("click", function () {
         selectTrack(index, true);
       });
@@ -649,15 +1022,16 @@
 
   function parseLocalFiles(fileList) {
     return Array.prototype.slice.call(fileList || []).map(function (file) {
-      var base = file.name.replace(/\.[^.]+$/, "");
-      var parts = base.split(" - ");
+      var localeBase = file.name.replace(/\.[^.]+$/, "");
+      var parts = localeBase.split(" - ");
       var artist = parts.length > 1 ? parts.shift().trim() : "本地文件";
-      var title = parts.join(" - ").trim() || base;
+      var title = parts.join(" - ").trim() || localeBase;
       return {
         name: title,
         artist: artist,
         url: URL.createObjectURL(file),
         cover: FALLBACK_COVER,
+        fileName: file.name,
         local: true
       };
     });
@@ -746,6 +1120,10 @@
     els.repeatBtn.addEventListener("click", cycleRepeat);
     els.muteBtn.addEventListener("click", function () {
       setVolume(state.volume > 0 ? 0 : 0.8);
+    });
+    els.downloadAllBtn.addEventListener("click", downloadBatch);
+    els.downloadCurrentBtn.addEventListener("click", function () {
+      downloadTrack(currentTrack(), els.downloadCurrentBtn);
     });
 
     els.progress.addEventListener("input", function () {
@@ -902,6 +1280,7 @@
     cacheEls();
     bindEvents();
     restorePreferences();
+    restoreDownloadUrls();
 
     var saved = loadSavedSource();
     var source = saved || DEFAULT_SOURCE;

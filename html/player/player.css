@@ -482,6 +482,12 @@ input[type="range"]::-moz-range-thumb {
   white-space: nowrap;
 }
 
+.source-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .queue {
   display: flex;
   flex-direction: column;
@@ -520,6 +526,54 @@ input[type="range"]::-moz-range-thumb {
   color: var(--muted);
   font-size: 10px;
   letter-spacing: 1.6px;
+}
+
+.queue-head > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.queue-head-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.queue-dl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border: 1px solid rgba(73, 177, 245, 0.32);
+  border-radius: 999px;
+  background: rgba(73, 177, 245, 0.1);
+  color: #bfe8ff;
+  font-family: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.queue-dl-btn .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.queue-dl-btn:hover {
+  background: rgba(73, 177, 245, 0.2);
+  border-color: rgba(73, 177, 245, 0.6);
+}
+
+.queue-dl-btn.is-busy {
+  border-color: rgba(57, 197, 187, 0.65);
+  color: #8ff5e8;
+}
+
+.queue-dl-btn.is-busy .icon {
+  animation: dl-pulse 1s ease-in-out infinite;
 }
 
 .search-wrap {
@@ -578,7 +632,7 @@ input[type="range"]::-moz-range-thumb {
 
 .track-item {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-columns: 28px minmax(0, 1fr) auto 30px;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
@@ -658,6 +712,56 @@ input[type="range"]::-moz-range-thumb {
 .track-bars i:nth-child(3) {
   height: 8px;
   animation-delay: 0.24s;
+}
+
+.track-dl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+
+.track-dl .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.track-item:hover .track-dl,
+.track-item.active .track-dl,
+.track-dl:focus-visible {
+  opacity: 1;
+}
+
+.track-dl:hover {
+  color: var(--accent);
+  background: rgba(73, 177, 245, 0.14);
+}
+
+.track-dl:disabled {
+  cursor: progress;
+}
+
+.track-dl.is-busy {
+  opacity: 1;
+  color: var(--accent-2);
+}
+
+.track-dl.is-busy .icon {
+  animation: dl-pulse 1s ease-in-out infinite;
+}
+
+@media (hover: none) {
+  .track-dl {
+    opacity: 1;
+  }
 }
 
 .queue-empty {
@@ -811,6 +915,12 @@ body.is-loading .track-list {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes dl-pulse {
+  50% {
+    opacity: 0.35;
   }
 }
 

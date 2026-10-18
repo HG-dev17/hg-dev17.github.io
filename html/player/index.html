@@ -5,6 +5,7 @@
   可自定义项：
     · 默认歌单：assets/default-playlist.json（{name, artist, id} 数组，id 为网易云歌曲 ID）
     · 音频播放：走网易云外链 music.163.com/song/media/outer/url，不依赖第三方接口
+    · 下载：单曲 / 当前搜索结果批量下载，优先直链下载，失败自动打开原链接
     · 导入歌单用的接口：player.js 顶部 APIS 数组（Meting 兼容接口）
     · 返回主页链接：下方 .back-home 的 href
 -->
@@ -34,6 +35,7 @@
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5L21 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="i-import" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   </svg>
 
@@ -105,7 +107,12 @@
           </button>
           <input id="volume" type="range" min="0" max="100" value="80" step="1" aria-label="音量">
         </div>
-        <div class="source-chip" id="sourceChip">网易云歌单</div>
+        <div class="source-actions">
+          <div class="source-chip" id="sourceChip">网易云歌单</div>
+          <button class="icon-btn small" id="downloadCurrentBtn" type="button" title="下载当前歌曲" aria-label="下载当前歌曲">
+            <svg class="icon"><use href="#i-download"/></svg>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -115,7 +122,13 @@
           <h2 id="playlistName">默认歌单</h2>
           <p><span id="trackCount">0</span> 首 · <span id="sourceLabel">网易云</span></p>
         </div>
-        <span class="queue-badge" id="queueBadge">PLAYLIST</span>
+        <div class="queue-head-actions">
+          <span class="queue-badge" id="queueBadge">PLAYLIST</span>
+          <button class="queue-dl-btn" id="downloadAllBtn" type="button" title="下载当前列表（受搜索筛选影响）">
+            <svg class="icon"><use href="#i-download"/></svg>
+            <span id="downloadAllText">批量下载</span>
+          </button>
+        </div>
       </div>
 
       <div class="search-wrap">
