@@ -32,47 +32,30 @@
   background: transparent !important;
 }
   
-  /* 侧边栏个人信息卡片动态渐变色 */
+  /* 侧边栏个人信息卡片动态渐变色
+     颜色全部取同一色系的浅色（粉→紫→蓝→青→粉），首尾同色，循环时不会出现接缝 */
 #aside-content > .card-widget.card-info {
-  background: linear-gradient(
+  background-image: linear-gradient(
     -45deg,
-    #e8d8b9,
-    #eccec5,
-    #a3e9eb,
-    #bdbdf0,
-    #eec1ea
+    #f0dbea,
+    #e6d6f5,
+    #d7e6f8,
+    #d3ecf2,
+    #f0dbea
   );
   box-shadow: 0 0 5px rgb(66, 68, 68);
   position: relative;
-  background-size: 400% 400%;
-  -webkit-animation: Gradient 10s ease infinite;
-  -moz-animation: Gradient 10s ease infinite;
-  animation: Gradient 10s ease infinite !important;
+  background-repeat: no-repeat;
+  /* 250% 让屏幕里同时看到两段过渡，换色更柔和 */
+  background-size: 250% 250%;
+  /* 固定的基准位置：低性能模式关掉动画时不会突然跳到另一个颜色 */
+  background-position: 0% 50%;
+  will-change: background-position;
+  -webkit-animation: Gradient 20s ease-in-out infinite;
+  animation: Gradient 20s ease-in-out infinite !important;
 }
 
-/* 个人展示栏变色 */
-@-webkit-keyframes Gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-@-moz-keyframes Gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
+/* 个人展示栏变色：慢速往返，两头自然减速，不会突然加速 */
 @keyframes Gradient {
   0% {
     background-position: 0% 50%;
@@ -541,7 +524,6 @@ body::-webkit-scrollbar {
 
 /* 低性能模式：由 fps.js 在持续掉帧时自动给 <html> 加上 .low-perf */
 html.low-perf .brinks,
-html.low-perf #aside-content > .card-widget.card-info,
 html.low-perf .avatar-img,
 html.low-perf h1::before,
 html.low-perf h2::before,
@@ -552,6 +534,13 @@ html.low-perf h6::before,
 html.low-perf .parallax > use,
 html.low-perf #heartbeat {
   animation: none !important;
+}
+
+/* 卡片渐变只暂停、不回退，避免切换低性能模式时颜色突变 */
+html.low-perf #aside-content > .card-widget.card-info {
+  -webkit-animation-play-state: paused !important;
+  animation-play-state: paused !important;
+  will-change: auto;
 }
 
 /* 毛玻璃在低端 GPU / 软件渲染下非常吃性能 */
