@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<!--
+  cookiesky Music · 独立音乐播放器
+  整个 player 目录可以直接拷走单独部署（纯静态，无构建、无依赖）。
+  可自定义项：
+    · 默认歌单：assets/default-playlist.json（{name, artist, id} 数组，id 为网易云歌曲 ID）
+    · 音频播放：走网易云外链 music.163.com/song/media/outer/url，不依赖第三方接口
+    · 导入歌单用的接口：player.js 顶部 APIS 数组（Meting 兼容接口）
+    · 返回主页链接：下方 .back-home 的 href
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#070c14">
+  <!-- 网易云 CDN 有时会跳转到 http 地址，这一行让 https 站点自动升级为 https，避免被浏览器拦截 -->
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <title>音乐播放器 | cookiesky</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23070c14'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%2349b1f5'/%3E%3Ccircle cx='16' cy='16' r='1.4' fill='%23070c14'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="player.css">
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true">
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="M7 5h2v14H7zM20 5v14l-10-7z"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M15 5h2v14h-2zM4 5v14l10-7z"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20l17-17M21 16v5h-5M15 15l6 6M4 4l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4M3 11V9a4 4 0 014-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 01-4 4H3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-repeat-one" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4M3 11V9a4 4 0 014-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 01-4 4H3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 15V9l-2 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8a5 5 0 010 8M18.5 5.5a9 9 0 010 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5L21 21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-import" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  </svg>
+
+  <div class="bg" id="bg"></div>
+  <div class="bg-mask"></div>
+
+  <header class="topbar">
+    <a class="back-home" href="/">
+      <svg class="icon"><use href="#i-back"/></svg>
+      <span>返回主页</span>
+    </a>
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span>cookiesky's Music</span>
+    </div>
+    <div class="top-actions">
+      <button class="ghost-btn" id="importBtn" type="button">
+        <svg class="icon"><use href="#i-import"/></svg>
+        <span>导入歌单</span>
+      </button>
+      <button class="ghost-btn" id="localFileBtn" type="button">
+        <svg class="icon"><use href="#i-folder"/></svg>
+        <span>添加本地音乐</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="stage glass">
+      <div class="cover-wrap">
+        <div class="cover-ring"></div>
+        <img class="cover" id="cover" alt="专辑封面" src="assets/cover.webp">
+      </div>
+
+      <div class="track-meta">
+        <div class="now-label"><span class="eq"><i></i><i></i><i></i></span> 正在播放</div>
+        <h1 id="title">加载歌单中…</h1>
+        <p id="artist">cookiesky</p>
+      </div>
+
+      <div class="progress-row">
+        <span id="currentTime">00:00</span>
+        <input id="progress" type="range" min="0" max="1000" value="0" step="1" aria-label="播放进度">
+        <span id="duration">00:00</span>
+      </div>
+
+      <div class="controls">
+        <button class="icon-btn" id="shuffleBtn" type="button" title="随机播放" aria-label="随机播放">
+          <svg class="icon"><use href="#i-shuffle"/></svg>
+        </button>
+        <button class="icon-btn" id="prevBtn" type="button" title="上一首" aria-label="上一首">
+          <svg class="icon"><use href="#i-prev"/></svg>
+        </button>
+        <button class="play-btn" id="playBtn" type="button" title="播放 / 暂停" aria-label="播放或暂停">
+          <svg class="icon" id="playIcon"><use href="#i-play"/></svg>
+        </button>
+        <button class="icon-btn" id="nextBtn" type="button" title="下一首" aria-label="下一首">
+          <svg class="icon"><use href="#i-next"/></svg>
+        </button>
+        <button class="icon-btn" id="repeatBtn" type="button" title="循环模式" aria-label="循环模式">
+          <svg class="icon" id="repeatIcon"><use href="#i-repeat"/></svg>
+        </button>
+      </div>
+
+      <div class="bottom-row">
+        <div class="volume">
+          <button class="icon-btn small" id="muteBtn" type="button" title="静音" aria-label="静音">
+            <svg class="icon" id="volumeIcon"><use href="#i-volume"/></svg>
+          </button>
+          <input id="volume" type="range" min="0" max="100" value="80" step="1" aria-label="音量">
+        </div>
+        <div class="source-chip" id="sourceChip">网易云歌单</div>
+      </div>
+    </section>
+
+    <aside class="queue glass">
+      <div class="queue-head">
+        <div>
+          <h2 id="playlistName">默认歌单</h2>
+          <p><span id="trackCount">0</span> 首 · <span id="sourceLabel">网易云</span></p>
+        </div>
+        <span class="queue-badge" id="queueBadge">PLAYLIST</span>
+      </div>
+
+      <div class="search-wrap">
+        <svg class="icon"><use href="#i-search"/></svg>
+        <input id="search" type="search" placeholder="搜索歌曲 / 歌手" autocomplete="off">
+      </div>
+
+      <ol class="track-list" id="trackList"></ol>
+      <div class="queue-empty" id="queueEmpty" hidden>暂无歌曲</div>
+    </aside>
+  </main>
+
+  <div class="modal-backdrop" id="importModal" aria-hidden="true">
+    <div class="modal glass" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="closeModal" type="button" aria-label="关闭">
+        <svg class="icon"><use href="#i-close"/></svg>
+      </button>
+      <h2 id="modalTitle">导入歌单</h2>
+      <p class="modal-desc">支持网易云歌单 ID / 歌单链接，或 Meting 歌单 API。</p>
+      <input id="importInput" type="text" placeholder="例如：2331639478 或 https://music.163.com/#/playlist?id=..." autocomplete="off">
+      <div class="modal-actions">
+        <button class="primary-btn" id="importConfirm" type="button">导入</button>
+        <button class="ghost-btn" id="useDefault" type="button">恢复默认歌单</button>
+      </div>
+      <p class="hint">导入的歌单会保存在浏览器本地；版权与地区限制由网易云决定。</p>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="addModeModal" aria-hidden="true">
+    <div class="modal glass" role="dialog" aria-modal="true" aria-labelledby="addModeTitle">
+      <button class="modal-close" id="closeAddMode" type="button" aria-label="关闭">
+        <svg class="icon"><use href="#i-close"/></svg>
+      </button>
+      <h2 id="addModeTitle">添加本地音乐</h2>
+      <p class="modal-desc">已选择 <strong id="addCount">0</strong> 首，要如何加入当前歌单？</p>
+      <div class="modal-actions">
+        <button class="primary-btn" id="addAppend" type="button">追加到歌单末尾</button>
+        <button class="ghost-btn" id="addReplace" type="button">清空并替换歌单</button>
+      </div>
+      <p class="hint">本地文件由浏览器直接读取，不会上传服务器；刷新页面后需要重新选择。</p>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept="audio/*" multiple hidden>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="player.js" defer></script>
+</body>
+</html>

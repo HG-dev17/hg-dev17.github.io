@@ -16,13 +16,13 @@ function createtime1() {
         | |  | |/ _ \ \ / / __\ \ /\ / / _ \| '__| |/ /
         | |__| |  __/\ V /\__ \\ V  V / (_) | |  |   <
         |_____/ \___| \_/ |___/ \_/\_/ \___/|_|  |_|\_\
-            powered by m_HG_m devs-HG HG245*
+            powered by cookiesky devs-HG HG245*
                                               
 `,
         "小站已经苟活",
         dnum,
         "天啦!",
-        "©2021~2024 By m_HG_m",
+        "©2021~2024 By cookiesky",
     ];
 
     setTimeout(
@@ -61,7 +61,7 @@ function createtime2() {
     setTimeout(
         console.warn.bind(
             console,
-            "%c ⚡ Powered by m_HG_m %c 你正在访问m_HG_m的博客",
+            "%c ⚡ Powered by cookiesky %c 你正在访问cookiesky的博客",
             "color:white; background-color:#f0ad4e",
             ""
         )

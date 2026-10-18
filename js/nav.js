@@ -16,7 +16,7 @@ function tonav() {
         position = scroll;
     });
     //修复没有弄右键菜单的童鞋无法回顶部的问题
-    document.getElementById("page-name").innerText = document.title.split(" | m_HG_m")[0];
+    document.getElementById("page-name").innerText = document.title.split(" | cookiesky")[0];
 }
 
 function scrollToTop() {

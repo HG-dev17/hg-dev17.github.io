@@ -1,3 +1,29 @@
+// Swal 按需加载：只有真的触发节日弹窗时才下载 sweetalert2（约 91KB）
+(function () {
+    if (window.Swal && window.Swal.fire) return;
+    var queue = [];
+    var loading = false;
+    window.Swal = {
+        fire: function () {
+            queue.push(Array.prototype.slice.call(arguments));
+            if (loading) return;
+            loading = true;
+            var s = document.createElement("script");
+            s.src = "/js/sweetalert2.all.js";
+            s.onload = function () {
+                loading = false;
+                var real = window.Swal;
+                if (!real || !real.fire) return;
+                queue.splice(0).forEach(function (args) {
+                    real.fire.apply(real, args);
+                });
+            };
+            s.onerror = function () { loading = false; queue.length = 0; };
+            document.head.appendChild(s);
+        }
+    };
+})();
+
 var d = new Date();
 m = d.getMonth() + 1;
 dd = d.getDate();
